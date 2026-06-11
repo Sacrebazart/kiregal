@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Faceoff — Duels entre potes",
-  description: "Réglez vos paris en 10 secondes. Un mini-duel, un enjeu, un perdant.",
+  title: "Kirégal — Qui régale ce soir ?",
+  description: "Qui paie le coup ? Qui fait la vaisselle ? Un mini-duel entre potes tranche pour vous. Le perdant régale.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <header className="sticky top-0 z-10 backdrop-blur bg-bg/70 border-b border-white/10">
           <div className="mx-auto max-w-3xl flex items-center justify-between px-4 h-14">
             <Link href="/" className="text-lg font-extrabold tracking-tight">
-              ⚔️ Face<span className="text-accent">off</span>
+              🍻 Ki<span className="text-accent">régal</span>
             </Link>
           </div>
         </header>

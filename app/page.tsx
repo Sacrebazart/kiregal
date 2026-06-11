@@ -6,16 +6,16 @@ export default function Home() {
     <div className="flex flex-col gap-12">
       <section className="text-center py-10">
         <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight">
-          Réglez ça
+          Alors,
           <br />
           <span className="bg-gradient-to-r from-accent to-accent2 bg-clip-text text-transparent">
-            en 10 secondes.
+            qui régale ce soir ?
           </span>
         </h1>
         <p className="mx-auto mt-5 max-w-md text-white/60">
-          Qui paie le resto ? Qui fait la vaisselle ? On parie 10 balles ?
-          Choisissez un enjeu, affrontez-vous sur un mini-duel débile, et que le
-          meilleur gagne.
+          Qui paie le coup ? Qui fait la vaisselle ? On parie 10 balles ?
+          Arrêtez de débattre : un mini-duel débile tranche en 10 secondes. Le
+          perdant régale.
         </p>
         <Link
           href="/duel"

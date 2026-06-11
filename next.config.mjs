@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "export",
-  basePath: "/faceoff",
+  basePath: "/kiregal",
   trailingSlash: true,
   images: { unoptimized: true },
 };

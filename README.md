@@ -1,9 +1,9 @@
-# ⚔️ Faceoff
+# 🍻 Kirégal
 
-Réglez vos paris en 10 secondes. Un mini-duel 1v1 entre potes, un enjeu (gage ou argent), un perdant.
+« Qui régale ce soir ? » Un mini-duel 1v1 entre potes tranche pour vous. Un enjeu (gage ou argent), un perdant : il régale.
 
 ## Concept
-Le but : **on ne veut plus prendre de décision** — Faceoff tranche. Qui paie le resto ? Qui fait la vaisselle ? On parie 10 balles ? Choisissez un enjeu, affrontez-vous sur un mini-duel débile mais tendu, et que le meilleur gagne.
+Le but : **on ne veut plus prendre de décision** — Kirégal tranche. Qui paie le coup ? Qui fait la vaisselle ? On parie 10 balles ? Choisissez un enjeu, affrontez-vous sur un mini-duel débile mais tendu, et que le meilleur gagne.
 
 ## Les duels
 Réflexe · Tap Battle · Cible · Bras de fer · Calcul éclair · Pile-poil · Simon · Morpion · Chifoumi · Bonne Couleur.

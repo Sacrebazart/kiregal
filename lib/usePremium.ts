@@ -10,12 +10,12 @@ export function usePremium() {
   const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
-    setIsPremium(localStorage.getItem("faceoff_premium") === "1");
+    setIsPremium(localStorage.getItem("kiregal_premium") === "1");
   }, []);
 
   const setPremium = (v: boolean) => {
-    if (v) localStorage.setItem("faceoff_premium", "1");
-    else localStorage.removeItem("faceoff_premium");
+    if (v) localStorage.setItem("kiregal_premium", "1");
+    else localStorage.removeItem("kiregal_premium");
     setIsPremium(v);
   };
 
@@ -29,8 +29,8 @@ export function usePremium() {
 const FREQ = 3;
 export function shouldShowAd(): boolean {
   if (typeof window === "undefined") return false;
-  if (localStorage.getItem("faceoff_premium") === "1") return false;
-  const n = Number(localStorage.getItem("faceoff_duel_count") || "0") + 1;
-  localStorage.setItem("faceoff_duel_count", String(n));
+  if (localStorage.getItem("kiregal_premium") === "1") return false;
+  const n = Number(localStorage.getItem("kiregal_duel_count") || "0") + 1;
+  localStorage.setItem("kiregal_duel_count", String(n));
   return n % FREQ === 0;
 }

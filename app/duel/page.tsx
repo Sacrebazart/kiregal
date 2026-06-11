@@ -75,7 +75,7 @@ export default function DuelPage() {
           <p className="mt-2 text-lg font-semibold">{verdict}</p>
           {stakeType === "argent" && !draw && (
             <p className="mt-2 text-xs text-white/40">
-              Faceoff ne gère pas l&apos;argent — réglez ça entre vous 😉
+              Kirégal ne gère pas l&apos;argent — réglez ça entre vous 😉
             </p>
           )}
         </div>

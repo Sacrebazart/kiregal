@@ -4,11 +4,23 @@ import Link from "next/link";
 import { useState } from "react";
 import { GAMES, getGame, randomGame, type Winner } from "@/lib/games";
 import { shouldShowAd } from "@/lib/usePremium";
+import { sfxWin, sfxDraw } from "@/lib/feedback";
 import AdBanner from "@/components/AdBanner";
 import RewardedAd from "@/components/RewardedAd";
 
 type Step = "setup" | "play" | "result";
 type StakeType = "gage" | "argent";
+
+const GAGES_SUGGERES = [
+  "🍻 régale ce soir",
+  "🍽️ paie le resto",
+  "☕ paie le café",
+  "🧽 fait la vaisselle",
+  "🍺 tournée générale",
+  "💪 10 pompes",
+  "🚮 sort la poubelle",
+  "🚗 conduit au retour",
+];
 
 export default function DuelPage() {
   const [step, setStep] = useState<Step>("setup");
@@ -32,6 +44,8 @@ export default function DuelPage() {
 
   const onResult = (w: Winner) => {
     setWinner(w);
+    if (w === "draw") sfxDraw();
+    else sfxWin();
     setShowBanner(shouldShowAd()); // plafonné : 1 bannière tous les 3 duels
     setCanPickRevenge(false);
     setStep("result");
@@ -157,12 +171,29 @@ export default function DuelPage() {
           </Toggle>
         </div>
         {stakeType === "gage" ? (
-          <input
-            value={gage}
-            onChange={(e) => setGage(e.target.value)}
-            placeholder="ex : fait la vaisselle, paie le café…"
-            className="w-full rounded-xl bg-card border border-white/10 px-4 py-3"
-          />
+          <>
+            <input
+              value={gage}
+              onChange={(e) => setGage(e.target.value)}
+              placeholder="ex : fait la vaisselle, paie le café…"
+              className="w-full rounded-xl bg-card border border-white/10 px-4 py-3"
+            />
+            <div className="mt-2 flex flex-wrap gap-2">
+              {GAGES_SUGGERES.map((g) => (
+                <button
+                  key={g}
+                  onClick={() => setGage(g)}
+                  className={`rounded-full px-3 py-1.5 text-sm border ${
+                    gage === g
+                      ? "bg-accent border-accent"
+                      : "bg-card border-white/10 text-white/70 hover:border-white/30"
+                  }`}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+          </>
         ) : (
           <div className="flex items-center gap-2">
             <input

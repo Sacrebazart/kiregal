@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { DuelGameProps } from "@/lib/games";
+import { sfxGo } from "@/lib/feedback";
 
 type Phase = "ready" | "waiting" | "go" | "done";
 
@@ -17,6 +18,7 @@ export default function ReactionDuel({ players, onResult }: DuelGameProps) {
     const delay = 1500 + Math.random() * 3500;
     timerRef.current = setTimeout(() => {
       startRef.current = performance.now();
+      sfxGo();
       setPhase("go");
     }, delay);
   };

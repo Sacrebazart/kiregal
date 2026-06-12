@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { DuelGameProps } from "@/lib/games";
+import { sfxTick, sfxGo } from "@/lib/feedback";
 
 const DURATION = 5;
 
@@ -19,9 +20,11 @@ export default function TapBattle({ players, onResult }: DuelGameProps) {
   useEffect(() => {
     if (phase !== "countdown") return;
     if (count === 0) {
+      sfxGo();
       setPhase("play");
       return;
     }
+    sfxTick();
     const t = setTimeout(() => setCount((c) => c - 1), 700);
     return () => clearTimeout(t);
   }, [phase, count]);

@@ -49,8 +49,16 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="text-center text-sm text-white/40">
-        Bientôt : chacun sur son téléphone (room avec code) · plus de duels · classements entre potes.
+      <section className="text-center">
+        <Link
+          href="/room"
+          className="inline-block rounded-xl border border-white/20 px-6 py-3 font-semibold hover:bg-white/5"
+        >
+          🌐 Jouer chacun sur son téléphone
+        </Link>
+        <p className="mt-4 text-xs text-white/40">
+          Bientôt : plus de duels en multi · classements entre potes.
+        </p>
       </section>
     </div>
   );

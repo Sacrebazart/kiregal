@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { GAMES, getGame, randomGame, type Winner } from "@/lib/games";
 import { shouldShowAd } from "@/lib/usePremium";
 import { sfxWin, sfxDraw } from "@/lib/feedback";
@@ -9,22 +9,12 @@ import AdBanner from "@/components/AdBanner";
 import RewardedAd from "@/components/RewardedAd";
 import ShareResult from "@/components/ShareResult";
 
-type Step = "setup" | "play" | "result";
+type Step = "loading" | "play" | "result";
 type StakeType = "gage" | "argent";
 
-const GAGES_SUGGERES = [
-  "🍻 régale ce soir",
-  "🍽️ paie le resto",
-  "☕ paie le café",
-  "🧽 fait la vaisselle",
-  "🍺 tournée générale",
-  "💪 10 pompes",
-  "🚮 sort la poubelle",
-  "🚗 conduit au retour",
-];
-
 export default function DuelPage() {
-  const [step, setStep] = useState<Step>("setup");
+  const router = useRouter();
+  const [step, setStep] = useState<Step>("loading");
   const [p1, setP1] = useState("Joueur 1");
   const [p2, setP2] = useState("Joueur 2");
   const [stakeType, setStakeType] = useState<StakeType>("gage");
@@ -40,26 +30,30 @@ export default function DuelPage() {
 
   const need = format === "bo3" ? 2 : 1; // manches à gagner pour remporter la série
 
-  // Jeu présélectionné depuis le carrousel d'accueil
+  // Lit la config posée par l'accueil et lance le jeu directement
   useEffect(() => {
+    let cfg: any = null;
     try {
-      const pick = sessionStorage.getItem("kiregal_pickgame");
-      if (pick) {
-        setGameSlug(pick);
-        sessionStorage.removeItem("kiregal_pickgame");
-      }
+      cfg = JSON.parse(sessionStorage.getItem("kiregal_duel_config") || "null");
+      sessionStorage.removeItem("kiregal_duel_config");
     } catch {
       /* ignore */
     }
-  }, []);
-
-  const start = () => {
-    const g = gameSlug === "random" ? randomGame() : getGame(gameSlug)!;
+    if (!cfg) cfg = {}; // ouverture directe sans config → duel par défaut (aléatoire)
+    setP1(cfg.p1 || "Joueur 1");
+    setP2(cfg.p2 || "Joueur 2");
+    setStakeType(cfg.stakeType || "gage");
+    setGage(cfg.gage || "");
+    setMontant(cfg.montant || "10");
+    setFormat(cfg.format || "bo3");
+    setGameSlug(cfg.game || "random");
+    const g = !cfg.game || cfg.game === "random" ? randomGame() : getGame(cfg.game) || randomGame();
     setActiveSlug(g.slug);
-    setWinner("draw");
     setSerie([0, 0]);
+    setWinner("draw");
     setStep("play");
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onResult = (w: Winner) => {
     setWinner(w);
@@ -86,6 +80,13 @@ export default function DuelPage() {
     setSerie([0, 0]);
     replay();
   };
+
+  // ---- LOADING (lecture de la config) ----
+  if (step === "loading") {
+    return (
+      <div className="flex items-center justify-center py-20 text-white/40">Chargement…</div>
+    );
+  }
 
   // ---- PLAY ----
   if (step === "play") {
@@ -124,7 +125,7 @@ export default function DuelPage() {
           >
             {roundDraw ? "Rejouer la manche" : `Manche ${mancheNo + 1} →`}
           </button>
-          <button onClick={() => setStep("setup")} className="text-sm text-white/40 hover:text-white">
+          <button onClick={() => router.push("/")} className="text-sm text-white/40 hover:text-white">
             Abandonner le duel
           </button>
         </div>
@@ -198,14 +199,11 @@ export default function DuelPage() {
           />
 
           <button
-            onClick={() => setStep("setup")}
+            onClick={() => router.push("/")}
             className="rounded-xl border border-white/20 px-6 py-3 font-semibold"
           >
-            Nouveau duel
+            🏠 Nouveau pari
           </button>
-          <Link href="/" className="text-sm text-white/40 hover:text-white">
-            Accueil
-          </Link>
         </div>
 
         {showBanner && <AdBanner label="Publicité" />}
@@ -213,159 +211,4 @@ export default function DuelPage() {
     );
   }
 
-  // ---- SETUP ----
-  return (
-    <div className="flex flex-col gap-7 max-w-md mx-auto">
-      <h1 className="text-2xl font-extrabold text-center">Nouveau duel</h1>
-
-      <Field label="Les adversaires">
-        <div className="flex items-center gap-3">
-          <input
-            value={p1}
-            onChange={(e) => setP1(e.target.value)}
-            className="flex-1 rounded-xl bg-card border border-white/10 px-4 py-3 text-center"
-          />
-          <span className="text-white/30 font-bold">VS</span>
-          <input
-            value={p2}
-            onChange={(e) => setP2(e.target.value)}
-            className="flex-1 rounded-xl bg-card border border-white/10 px-4 py-3 text-center"
-          />
-        </div>
-      </Field>
-
-      <Field label="L'enjeu">
-        <div className="flex gap-2 mb-3">
-          <Toggle active={stakeType === "gage"} onClick={() => setStakeType("gage")}>
-            🎭 Gage
-          </Toggle>
-          <Toggle active={stakeType === "argent"} onClick={() => setStakeType("argent")}>
-            💸 Argent
-          </Toggle>
-        </div>
-        {stakeType === "gage" ? (
-          <>
-            <input
-              value={gage}
-              onChange={(e) => setGage(e.target.value)}
-              placeholder="ex : fait la vaisselle, paie le café…"
-              className="w-full rounded-xl bg-card border border-white/10 px-4 py-3"
-            />
-            <div className="mt-2 flex flex-wrap gap-2">
-              {GAGES_SUGGERES.map((g) => (
-                <button
-                  key={g}
-                  onClick={() => setGage(g)}
-                  className={`rounded-full px-3 py-1.5 text-sm border ${
-                    gage === g
-                      ? "bg-accent border-accent"
-                      : "bg-card border-white/10 text-white/70 hover:border-white/30"
-                  }`}
-                >
-                  {g}
-                </button>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              value={montant}
-              onChange={(e) => setMontant(e.target.value)}
-              className="w-32 rounded-xl bg-card border border-white/10 px-4 py-3 text-center"
-            />
-            <span className="text-white/60">€ — le perdant doit au gagnant</span>
-          </div>
-        )}
-      </Field>
-
-      <Field label="Le duel">
-        <div className="grid grid-cols-3 gap-2">
-          <GameChip active={gameSlug === "random"} onClick={() => setGameSlug("random")} emoji="🎲" name="Au hasard" />
-          {GAMES.map((g) => (
-            <GameChip
-              key={g.slug}
-              active={gameSlug === g.slug}
-              onClick={() => setGameSlug(g.slug)}
-              emoji={g.emoji}
-              name={g.title}
-            />
-          ))}
-        </div>
-      </Field>
-
-      <Field label="Format">
-        <div className="flex gap-2">
-          <Toggle active={format === "single"} onClick={() => setFormat("single")}>
-            ⚡ Manche sèche
-          </Toggle>
-          <Toggle active={format === "bo3"} onClick={() => setFormat("bo3")}>
-            🔥 3 manches
-          </Toggle>
-        </div>
-      </Field>
-
-      <button onClick={start} className="rounded-xl bg-accent px-6 py-4 text-lg font-bold">
-        Affrontez-vous ⚔️
-      </button>
-      <Link href="/" className="text-center text-sm text-white/40 hover:text-white">
-        Annuler
-      </Link>
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <p className="text-xs uppercase tracking-wide text-white/40 mb-2">{label}</p>
-      {children}
-    </div>
-  );
-}
-
-function Toggle({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex-1 rounded-xl px-4 py-2 font-semibold border ${
-        active ? "bg-accent border-accent" : "bg-card border-white/10 text-white/60"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function GameChip({
-  active,
-  onClick,
-  emoji,
-  name,
-}: {
-  active: boolean;
-  onClick: () => void;
-  emoji: string;
-  name: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-xl px-2 py-3 border text-center ${
-        active ? "bg-accent/20 border-accent" : "bg-card border-white/10"
-      }`}
-    >
-      <div className="text-2xl">{emoji}</div>
-      <div className="text-xs mt-1">{name}</div>
-    </button>
-  );
 }

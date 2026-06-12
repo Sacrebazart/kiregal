@@ -7,6 +7,7 @@ import { shouldShowAd } from "@/lib/usePremium";
 import { sfxWin, sfxDraw } from "@/lib/feedback";
 import AdBanner from "@/components/AdBanner";
 import RewardedAd from "@/components/RewardedAd";
+import ShareResult from "@/components/ShareResult";
 
 type Step = "setup" | "play" | "result";
 type StakeType = "gage" | "argent";
@@ -178,6 +179,10 @@ export default function DuelPage() {
               onReward={() => setCanPickRevenge(true)}
             />
           )}
+
+          <ShareResult
+            text={`🍻 Kirégal — ${winnerName} a battu ${loserName} ${format === "bo3" ? `(${serie[0]}–${serie[1]})` : ""}. ${loserName} : ${stakeType === "gage" ? (gage.trim() || "gage perdu") : `doit ${montant}€`} 😏`}
+          />
 
           <button
             onClick={() => setStep("setup")}

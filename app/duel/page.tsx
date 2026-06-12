@@ -32,13 +32,18 @@ export default function DuelPage() {
   const [gameSlug, setGameSlug] = useState<string>("random");
   const [activeSlug, setActiveSlug] = useState<string>("reaction");
   const [winner, setWinner] = useState<Winner>("draw");
+  const [format, setFormat] = useState<"single" | "bo3">("bo3");
+  const [serie, setSerie] = useState<[number, number]>([0, 0]);
   const [showBanner, setShowBanner] = useState(false);
   const [canPickRevenge, setCanPickRevenge] = useState(false);
+
+  const need = format === "bo3" ? 2 : 1; // manches à gagner pour remporter la série
 
   const start = () => {
     const g = gameSlug === "random" ? randomGame() : getGame(gameSlug)!;
     setActiveSlug(g.slug);
     setWinner("draw");
+    setSerie([0, 0]);
     setStep("play");
   };
 
@@ -46,7 +51,13 @@ export default function DuelPage() {
     setWinner(w);
     if (w === "draw") sfxDraw();
     else sfxWin();
-    setShowBanner(shouldShowAd()); // plafonné : 1 bannière tous les 3 duels
+
+    const ns: [number, number] =
+      w === "draw" ? serie : [serie[0] + (w === 0 ? 1 : 0), serie[1] + (w === 1 ? 1 : 0)];
+    setSerie(ns);
+
+    const over = ns[0] >= need || ns[1] >= need;
+    setShowBanner(over ? shouldShowAd() : false); // bannière seulement en fin de série
     setCanPickRevenge(false);
     setStep("result");
   };
@@ -57,6 +68,11 @@ export default function DuelPage() {
     setStep("play");
   };
 
+  const newSeries = () => {
+    setSerie([0, 0]);
+    replay();
+  };
+
   // ---- PLAY ----
   if (step === "play") {
     const Game = getGame(activeSlug)!.Component;
@@ -65,29 +81,65 @@ export default function DuelPage() {
 
   // ---- RESULT ----
   if (step === "result") {
-    const draw = winner === "draw";
-    const winnerName = winner === 0 ? p1 : winner === 1 ? p2 : null;
-    const loserName = winner === 0 ? p2 : winner === 1 ? p1 : null;
-    const verdict = draw
-      ? "Égalité ! On remet ça."
-      : stakeType === "gage"
-      ? gage.trim()
-        ? `${loserName} doit : ${gage.trim()}`
-        : `${loserName} a perdu le gage.`
-      : `${loserName} doit ${montant || "?"} € à ${winnerName}`;
+    const seriesOver = serie[0] >= need || serie[1] >= need;
+    const roundDraw = winner === "draw";
+
+    // ----- INTER-MANCHE (Best-of-3 en cours) -----
+    if (!seriesOver) {
+      const roundWinnerName = winner === 0 ? p1 : winner === 1 ? p2 : null;
+      const mancheNo = serie[0] + serie[1] + (roundDraw ? 1 : 0);
+      return (
+        <div className="text-center py-12 flex flex-col items-center gap-6">
+          <div className="text-5xl">{roundDraw ? "🤝" : "✅"}</div>
+          <h1 className="text-2xl font-extrabold">
+            {roundDraw ? "Égalité sur la manche" : `Manche pour ${roundWinnerName}`}
+          </h1>
+
+          <div className="flex items-center gap-4 text-xl font-bold">
+            <span>{p1}</span>
+            <span className="rounded-xl bg-card border border-white/15 px-4 py-2 text-2xl tabular-nums">
+              {serie[0]} – {serie[1]}
+            </span>
+            <span>{p2}</span>
+          </div>
+          <p className="text-white/40 text-sm">Série en {need * 2 - 1} manches · premier à {need}</p>
+
+          <button
+            onClick={() => replay()}
+            className="rounded-xl bg-accent px-8 py-4 text-lg font-bold"
+          >
+            {roundDraw ? "Rejouer la manche" : `Manche ${mancheNo + 1} →`}
+          </button>
+          <button onClick={() => setStep("setup")} className="text-sm text-white/40 hover:text-white">
+            Abandonner le duel
+          </button>
+        </div>
+      );
+    }
+
+    // ----- FIN DE SÉRIE : verdict de l'enjeu -----
+    const sWinner: 0 | 1 = serie[0] > serie[1] ? 0 : 1;
+    const winnerName = sWinner === 0 ? p1 : p2;
+    const loserName = sWinner === 0 ? p2 : p1;
+    const verdict =
+      stakeType === "gage"
+        ? gage.trim()
+          ? `${loserName} doit : ${gage.trim()}`
+          : `${loserName} a perdu le gage.`
+        : `${loserName} doit ${montant || "?"} € à ${winnerName}`;
 
     return (
       <div className="text-center py-10 flex flex-col items-center gap-6">
-        <div className="text-6xl">{draw ? "🤝" : "🏆"}</div>
+        <div className="text-6xl">🏆</div>
         <div>
-          {!draw && <p className="text-white/50">Vainqueur</p>}
-          <h1 className="text-3xl font-extrabold">{draw ? "Match nul" : winnerName}</h1>
+          <p className="text-white/50">Vainqueur{format === "bo3" ? ` de la série (${serie[0]}–${serie[1]})` : ""}</p>
+          <h1 className="text-3xl font-extrabold">{winnerName}</h1>
         </div>
 
         <div className="w-full max-w-sm rounded-2xl border border-amber-400/40 bg-card p-5">
           <p className="text-xs uppercase tracking-wide text-amber-300/80">L&apos;enjeu</p>
           <p className="mt-2 text-lg font-semibold">{verdict}</p>
-          {stakeType === "argent" && !draw && (
+          {stakeType === "argent" && (
             <p className="mt-2 text-xs text-white/40">
               Kirégal ne gère pas l&apos;argent — réglez ça entre vous 😉
             </p>
@@ -102,7 +154,10 @@ export default function DuelPage() {
                 {GAMES.map((g) => (
                   <button
                     key={g.slug}
-                    onClick={() => replay(g.slug)}
+                    onClick={() => {
+                      setSerie([0, 0]);
+                      replay(g.slug);
+                    }}
                     className="rounded-lg bg-card border border-white/10 py-2 text-xl"
                     title={g.title}
                   >
@@ -112,7 +167,7 @@ export default function DuelPage() {
               </div>
             </div>
           ) : (
-            <button onClick={() => replay()} className="rounded-xl bg-accent px-6 py-3 font-bold">
+            <button onClick={newSeries} className="rounded-xl bg-accent px-6 py-3 font-bold">
               🔁 Revanche
             </button>
           )}
@@ -219,6 +274,17 @@ export default function DuelPage() {
               name={g.title}
             />
           ))}
+        </div>
+      </Field>
+
+      <Field label="Format">
+        <div className="flex gap-2">
+          <Toggle active={format === "single"} onClick={() => setFormat("single")}>
+            ⚡ Manche sèche
+          </Toggle>
+          <Toggle active={format === "bo3"} onClick={() => setFormat("bo3")}>
+            🔥 3 manches
+          </Toggle>
         </div>
       </Field>
 

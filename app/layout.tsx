@@ -1,6 +1,12 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Fredoka } from "next/font/google";
+
+const fredoka = Fredoka({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
 export const metadata: Metadata = {
   title: "Kirégal — Qui régale ce soir ?",
@@ -10,11 +16,17 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
-      <body className="min-h-screen">
+      <body className={`${fredoka.className} min-h-screen`}>
         <header className="sticky top-0 z-10 backdrop-blur bg-bg/70 border-b border-white/10">
           <div className="mx-auto max-w-3xl flex items-center justify-between px-4 h-14">
             <Link href="/" className="text-lg font-extrabold tracking-tight">
               🍻 Ki<span className="text-accent">régal</span>
+            </Link>
+            <Link
+              href="/room"
+              className="rounded-full bg-accent2/20 text-accent2 text-sm font-semibold px-3 py-1"
+            >
+              🌐 Room
             </Link>
           </div>
         </header>

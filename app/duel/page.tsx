@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GAMES, getGame, randomGame, type Winner } from "@/lib/games";
 import { shouldShowAd } from "@/lib/usePremium";
 import { sfxWin, sfxDraw } from "@/lib/feedback";
@@ -39,6 +39,19 @@ export default function DuelPage() {
   const [canPickRevenge, setCanPickRevenge] = useState(false);
 
   const need = format === "bo3" ? 2 : 1; // manches à gagner pour remporter la série
+
+  // Jeu présélectionné depuis le carrousel d'accueil
+  useEffect(() => {
+    try {
+      const pick = sessionStorage.getItem("kiregal_pickgame");
+      if (pick) {
+        setGameSlug(pick);
+        sessionStorage.removeItem("kiregal_pickgame");
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const start = () => {
     const g = gameSlug === "random" ? randomGame() : getGame(gameSlug)!;

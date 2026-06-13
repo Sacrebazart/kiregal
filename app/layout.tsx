@@ -22,12 +22,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Link href="/" className="text-lg font-extrabold tracking-tight">
               🍻 Ki<span className="text-accent">régal</span>
             </Link>
-            <Link
-              href="/room"
-              className="rounded-full bg-accent2/20 text-accent2 text-sm font-semibold px-3 py-1"
-            >
-              🌐 Room
-            </Link>
           </div>
         </header>
         <main className="mx-auto max-w-3xl px-4 py-8">{children}</main>

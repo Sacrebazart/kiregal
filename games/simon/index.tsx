@@ -10,35 +10,43 @@ const PADS = [
   { on: "#10b981", off: "#0a2c20" },
 ];
 
-type Phase = "show" | "input" | "over";
+type Phase = "handoff" | "show" | "input" | "over";
 
 const rand = () => Math.floor(Math.random() * 4);
 
 export default function Simon({ players, onResult }: DuelGameProps) {
   const [seq, setSeq] = useState<number[]>(() => [rand()]);
   const [turn, setTurn] = useState<0 | 1>(0);
-  const [phase, setPhase] = useState<Phase>("show");
+  const [phase, setPhase] = useState<Phase>("handoff");
   const [active, setActive] = useState<number | null>(null);
   const [inputPos, setInputPos] = useState(0);
   const [loser, setLoser] = useState<0 | 1 | null>(null);
+  const [showLabel, setShowLabel] = useState("");
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  // Joue la séquence en boucle de flashs au début du tour
-  useEffect(() => {
-    if (phase !== "show") return;
+  const clearTimers = () => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
+  };
+
+  // Joue la séquence en flashs, avec un petit "Prépare-toi" avant
+  useEffect(() => {
+    if (phase !== "show") return;
+    clearTimers();
+    setShowLabel("Regarde bien… 👀");
+    setActive(null);
+    const startDelay = 900;
     seq.forEach((pad, i) => {
-      timers.current.push(setTimeout(() => setActive(pad), 600 * i + 300));
-      timers.current.push(setTimeout(() => setActive(null), 600 * i + 650));
+      timers.current.push(setTimeout(() => setActive(pad), startDelay + 700 * i));
+      timers.current.push(setTimeout(() => setActive(null), startDelay + 700 * i + 420));
     });
     timers.current.push(
       setTimeout(() => {
         setInputPos(0);
         setPhase("input");
-      }, 600 * seq.length + 400)
+      }, startDelay + 700 * seq.length + 250)
     );
-    return () => timers.current.forEach(clearTimeout);
+    return clearTimers;
   }, [phase, seq, turn]);
 
   const tap = (pad: number) => {
@@ -47,9 +55,10 @@ export default function Simon({ players, onResult }: DuelGameProps) {
     setTimeout(() => setActive(null), 150);
 
     if (pad !== seq[inputPos]) {
+      // erreur → ce joueur perd
       setPhase("over");
       setLoser(turn);
-      setTimeout(() => onResult(turn === 0 ? 1 : 0), 700);
+      setTimeout(() => onResult(turn === 0 ? 1 : 0), 1200);
       return;
     }
 
@@ -58,29 +67,57 @@ export default function Simon({ players, onResult }: DuelGameProps) {
       setInputPos(next);
       return;
     }
-    // séquence complétée par ce joueur
+    // séquence réussie par ce joueur → on passe la main (avec écran de passation)
     if (turn === 0) {
       setTurn(1);
-      setPhase("show");
+      setPhase("handoff");
     } else {
-      // les deux ont réussi → on rallonge
       setSeq((s) => [...s, rand()]);
       setTurn(0);
-      setPhase("show");
+      setPhase("handoff");
     }
   };
 
+  // ----- ÉCRAN DE PASSATION (le temps de passer le téléphone) -----
+  if (phase === "handoff") {
+    const other = turn === 0 ? 1 : 0;
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center gap-6 bg-bg px-8 text-center">
+        <div className="text-6xl">🤝</div>
+        <div>
+          <p className="text-white/50">Passe le téléphone à</p>
+          <p className="text-4xl font-extrabold text-accent mt-1">{players[turn]}</p>
+        </div>
+        <p className="text-white/60 max-w-xs">
+          Niveau {seq.length} · répète la séquence sans te tromper. {players[other]} attend son tour 👀
+        </p>
+        <button
+          onClick={() => setPhase("show")}
+          className="rounded-2xl bg-accent px-10 py-5 text-2xl font-extrabold active:scale-95 transition-transform"
+        >
+          Je suis {players[turn]} ✋
+        </button>
+      </div>
+    );
+  }
+
+  // ----- JEU -----
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center gap-6 bg-bg px-6">
       <div className="text-center">
-        <p className="text-white/40 text-sm">Séquence de {seq.length}</p>
+        <p className="text-white/40 text-sm">Niveau {seq.length}</p>
         <p className="text-2xl font-extrabold">
           {phase === "over"
             ? `${loser === 0 ? players[0] : players[1]} s'est trompé 😤`
             : phase === "show"
-            ? `Regarde bien, ${players[turn]}…`
-            : `À toi, ${players[turn]} !`}
+            ? showLabel
+            : `À toi de répéter, ${players[turn]} !`}
         </p>
+        {phase === "input" && (
+          <p className="text-white/40 text-sm mt-1">
+            {inputPos} / {seq.length}
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -89,6 +126,7 @@ export default function Simon({ players, onResult }: DuelGameProps) {
           return (
             <button
               key={i}
+              data-pad={i}
               onPointerDown={() => tap(i)}
               disabled={phase !== "input"}
               style={{
@@ -102,6 +140,10 @@ export default function Simon({ players, onResult }: DuelGameProps) {
           );
         })}
       </div>
+
+      {phase === "show" && (
+        <p className="text-white/30 text-sm">Mémorise bien, à toi juste après…</p>
+      )}
     </div>
   );
 }
